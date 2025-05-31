@@ -1,5 +1,6 @@
-name: Django CI/CD
+name: Django CI
 
+# Trigger this workflow on pushes or pull requests to the 'main' branch
 on:
   push:
     branches: [ main ]
@@ -7,9 +8,12 @@ on:
     branches: [ main ]
 
 jobs:
+# 1. Build, Lint, Test (CI Phase)
   build:
     runs-on: ubuntu-latest
+
     services:
+    # Spin up a MySQL service for Django to use during tests
       mysql:
         image: mysql:8.0
         env:
@@ -21,22 +25,59 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
 
     steps:
+      # Checkout code from the GitHub repository
     - name: Checkout code
       uses: actions/checkout@v4
-
+      
+       # Set up Python environment
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.13'
+        python-version: '3.11'
 
+         # Install dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+
+     # Code Quality Checks (Linting, Formatting, Typing, Security)
+    - name: Run Flake8 for linting
+      continue-on-error: true
+      run: |
+        pip install flake8
+        flake8 .
+  
+    - name: Run Black for code formatting check
+      continue-on-error: true
+      run: |
+        pip install black
+        black --check .
+
+    - name: Run Mypy for type checking
+      continue-on-error: true
+      run: |
+        pip install mypy
+        mypy .
+
+    - name: Run Bandit for security checks
+      continue-on-error: true
+      run: |
+        pip install bandit
+        bandit -r .    
+
+    - name: Wait for DB
+      run: |
+        until mysqladmin ping -h 127.0.0.1 -u root --password=root; do
+          echo "Waiting for MySQL..."
+          sleep 5
+        done
+        
+    # Run Django database migrations and unit tests
     - name: Run Migrations and Tests
       env:
         DB_NAME: crm_db
@@ -48,27 +89,79 @@ jobs:
         python manage.py migrate
         python manage.py test
 
+     # Email Job status
+    - name: Send email notification
+      if: always()    # ensures this runs even if previous steps fail
+      uses: dawidd6/action-send-mail@v3
+      with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: >
+            [${{ job.status }}] CI/CD Pipeline - ${{ github.repository }}
+          to: ${{ secrets.EMAIL_RECIPIENTS }}
+          from: ${{ secrets.EMAIL_USERNAME }}
+          body: |
+            GitHub Actions CI/CD Workflow: ${{ github.workflow }}
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Job: ${{ github.job }}
+            Status: ${{ job.status }}
+  
+            View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    # Docker Image Build and Push (CD Phase)
   docker:
-    needs: build
+    needs: build   # Only run this after build job succeeds
     runs-on: ubuntu-latest
 
     steps:
+        # Checkout code again
     - name: Checkout code
       uses: actions/checkout@v4
 
+       # Set up Docker Buildx
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+       # Log in to DockerHub using GitHub Secrets
     - name: Log in to DockerHub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Build and push Docker image to DockerHub
     - name: Build and Push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/crm-web:latest
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/crm-web:latest
+          ${{ secrets.DOCKER_USERNAME }}/crm-web:${{ github.sha }}
+
+
+        #  Email Job status
+    - name: Send email notification
+      if: always()  # Ensures this runs even if previous steps fail
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{ secrets.SMTP_SERVER }}
+        server_port: ${{ secrets.SMTP_PORT }}
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: >
+         [${{ job.status }}] CI/CD Pipeline - ${{ github.repository }}
+        to: ${{ secrets.EMAIL_RECIPIENTS }}
+        from: ${{ secrets.EMAIL_USERNAME }}
+        body: |
+          GitHub Actions CI/CD Workflow: ${{ github.workflow }}
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Job: ${{ github.job }}
+          Status: ${{ job.status }}
+
+          View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}    
