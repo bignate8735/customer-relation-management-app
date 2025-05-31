@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  {% if user.is_authenticated %}
+    <h1>Welcome to Your CRM Dashboard</h1>
+
+    <h3>Recent Leads</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Company</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in leads %}
+          <tr>
+            <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+            <td>{{ lead.status }}</td>
+            <td>{{ lead.company }}</td>
+            <td>{{ lead.created_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-muted text-center">No leads found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Recent Customers</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+          <tr>
+            <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+            <td>{{ customer.email }}</td>
+            <td>{{ customer.created_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-muted text-center">No customers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Recent Interactions</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>With</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for interaction in interactions %}
+          <tr>
+            <td>{{ interaction.type }}</td>
+            <td>{{ interaction.lead.first_name }} {{ interaction.lead.last_name }}</td>
+            <td>{{ interaction.date|date:"Y-m-d H:i" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-muted text-center">No interactions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Companies</h3>
+    {% if companies %}
+      <ul class="list-group">
+        {% for company in companies %}
+          <li class="list-group-item">{{ company.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">No companies found.</p>
+    {% endif %}
+
+  {% else %}
+    <div class="alert alert-warning">You must be logged in to view the dashboard.</div>
+  {% endif %}
+</div>
+{% endblock %}

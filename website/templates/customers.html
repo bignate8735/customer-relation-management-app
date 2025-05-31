@@ -1,0 +1,25 @@
+<h2 class="mb-3">Customer List</h2>
+<a href="{% url 'customer_create' %}" class="btn btn-primary mb-3">Add New Customer</a>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for customer in customers %}
+      <tr>
+        <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+        <td>{{ customer.email }}</td>
+        <td>
+          <a href="{% url 'customer_edit' customer.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="3">No customers found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

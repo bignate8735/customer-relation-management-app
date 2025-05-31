@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2 class="mb-4">{{ form.instance.pk|yesno:"Edit Customer,Add Customer" }}</h2>
+  <form method="post" class="needs-validation" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <div class="text-danger">{{ field.errors|striptags }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'customer_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
+{% endblock %}
