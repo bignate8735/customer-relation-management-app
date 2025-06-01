@@ -22,7 +22,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h --silent"
+          --health-cmd="mysqladmin ping -h mysql -uroot -prootpass"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -70,9 +70,14 @@ jobs:
         pip install bandit
         bandit -r .    
 
-    - name: Wait for DB
+      # wait for db
+    - name: Wait for MySQL
       run: |
-        until mysqladmin ping -h mysql -u root --password=${{ secrets.MYSQL_ROOT_PASSWORD }}; do
+        for i in {1..10}; do
+          if mysqladmin ping -h mysql -uroot  -p${{ secrets.MYSQL_ROOT_PASSWORD }} ; then
+            echo "MySQL is up!"
+            break
+          fi
           echo "Waiting for MySQL..."
           sleep 5
         done
