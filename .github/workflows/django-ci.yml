@@ -17,8 +17,8 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: crm_db
+          MYSQL_ROOT_PASSWORD: ${{secrets.DB_PASSWORD}}
+          MYSQL_DATABASE: ${{ secrets.DB_NAME }}
         ports:
           - 3306:3306
         options: >-
@@ -80,18 +80,19 @@ jobs:
     # Run Django database migrations and unit tests
     - name: Run Migrations and Tests
       env:
-        DB_NAME: crm_db
-        DB_USER: root
-        DB_PASSWORD: root
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
+        DJANGO_SECRET_KEY: ${{secrets.SECRET_KEY}}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DATABASE_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{secrets.DB_HOST}}
+        DB_PORT: ${{secrets.DB_PORT}}
       run: |
         python manage.py migrate
         python manage.py test
 
      # Email Job status
-    - name: Send email notification
-      if: always()    # ensures this runs even if previous steps fail
+    - name: Send email on failure
+      if: failure()    # ensures this runs even if previous steps fail
       uses: dawidd6/action-send-mail@v3
       with:
           server_address: ${{ secrets.SMTP_SERVER }}
@@ -110,7 +111,7 @@ jobs:
             Status: ${{ job.status }}
   
             View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
+          
     # Docker Image Build and Push (CD Phase)
   docker:
     needs: build   # Only run this after build job succeeds
@@ -146,7 +147,7 @@ jobs:
 
         #  Email Job status
     - name: Send email notification
-      if: always()  # Ensures this runs even if previous steps fail
+      if: failure()  # Ensures this runs even if previous steps fail
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: ${{ secrets.SMTP_SERVER }}
@@ -165,3 +166,4 @@ jobs:
           Status: ${{ job.status }}
 
           View run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}    
+      
