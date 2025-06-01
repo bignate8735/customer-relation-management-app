@@ -72,7 +72,7 @@ DATABASES = {
         'NAME': config('DB_NAME'),
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),    # MUST be "db" (matches service name od database container)
+        'HOST': config('DB_HOST', default='db'),    # MUST be "db" (matches service name od database container)
         'PORT': config('DB_PORT', cast=int),
     }
 }
