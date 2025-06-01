@@ -10,15 +10,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Helper to get config from decouple or fallback to os.environ
 def env(key, default=None, cast=None):
     try:
+        # decouple will fail if cast is None and default is also None
+        if cast is None:
+            return config(key, default=default)
         return config(key, default=default, cast=cast)
-    except UndefinedValueError:
+    except (UndefinedValueError, TypeError):
         val = os.environ.get(key, default)
-        return cast(val) if (cast and val is not None) else val
-
+        if cast and val is not None:
+            return cast(val)
+        return val
+       
 # Now use `env()` everywhere
 SECRET_KEY = env('SECRET_KEY')
+if not SECRET_KEY:
+    raise RuntimeError(" SECRET_KEY is not set. Please define it in your environment or .env file.")
+
 DEBUG = env('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default='127.0.0.1', cast=lambda v: v.split(','))
+
+REQUIRED_DB_KEYS = ['DB_NAME', 'DB_USER', 'DB_PASSWORD']
+for key in REQUIRED_DB_KEYS:
+    if not env(key):
+        raise RuntimeError(f" {key} is not set. Please define it in your environment or .env file.")
+    
 
 DATABASES = {
     'default': {
