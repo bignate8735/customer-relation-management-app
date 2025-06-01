@@ -92,7 +92,7 @@ jobs:
 
      # Email Job status
     - name: Send email on failure
-      if: failure()    # ensures this runs even if previous steps fail
+      if: false    # ensures this runs even if previous steps fail
       uses: dawidd6/action-send-mail@v3
       with:
           server_address: ${{ secrets.SMTP_SERVER }}
@@ -147,7 +147,7 @@ jobs:
 
         #  Email Job status
     - name: Send email notification
-      if: failure()  # Ensures this runs even if previous steps fail
+      if: false  
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: ${{ secrets.SMTP_SERVER }}
