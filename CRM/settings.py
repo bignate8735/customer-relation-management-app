@@ -1,19 +1,35 @@
+# settings.py
+from decouple import config, UndefinedValueError
+import os
 from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Helper to get config from decouple or fallback to os.environ
+def env(key, default=None, cast=None):
+    try:
+        return config(key, default=default, cast=cast)
+    except UndefinedValueError:
+        val = os.environ.get(key, default)
+        return cast(val) if (cast and val is not None) else val
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# Now use `env()` everywhere
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default='127.0.0.1', cast=lambda v: v.split(','))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-
-#'django-insecure-o#j%rn191vib)ri+t@*cg=62)vf_a3n0ra8t6+@z5j(b_lgp3f'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-# Application definition
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST', default='127.0.0.1'),
+        'PORT': env('DB_PORT', default='3306', cast=int),
+    }
+}
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -57,25 +73,6 @@ WSGI_APPLICATION = 'CRM.wsgi.application'
 
 
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-
-# Database
-DEBUG = config('DEBUG', default=False, cast=bool)
-
-SECRET_KEY = config('SECRET_KEY')
-
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', cast=lambda v: v.split())
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='db'),    # MUST be "db" (matches service name od database container)
-        'PORT': config('DB_PORT', cast=int),
-    }
-}
 
 
 # Password validation
