@@ -80,6 +80,7 @@ jobs:
     # Run Django database migrations and unit tests
     - name: Run Migrations and Tests
       env:
+        DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
         DB_NAME: ${{ secrets.DB_NAME }}
         DB_USER: ${{ secrets.DATABASE_USER }}
