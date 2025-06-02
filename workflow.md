@@ -27,7 +27,7 @@ MYSQL
 mysql -uroot -p<password> -h db
 Here:
 	•	-u is the username (root)
-	•	-pBigNate@1234 is the password
+	•	-p<password> is the password
 	•	-h db assumes your MySQL service is named db in your Docker Compose file
 
 🔁 If your MySQL service has a different name, replace db with that service name.
