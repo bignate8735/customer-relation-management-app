@@ -26,7 +26,7 @@ if not SECRET_KEY:
     raise RuntimeError(" SECRET_KEY is not set. Please define it in your environment or .env file.")
 
 DEBUG = env('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default='127.0.0.1', cast=lambda v: v.split(','))
+ALLOWED_HOSTS = env('DJANGO_ALLOWED_HOSTS', default='localhost', cast=lambda v: v.split(','))
 
 REQUIRED_DB_KEYS = ['DB_NAME', 'DB_USER', 'DB_PASSWORD']
 for key in REQUIRED_DB_KEYS:
