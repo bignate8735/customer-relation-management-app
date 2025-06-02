@@ -1,1 +1,6 @@
 Local Docker → Nginx + Gunicorn → .env config → Staging Environment → GitHub Repo + Actions → Secure + CI/CD → Cloud Deployment
+
+
+docker pull nathansack/crm-web:latest
+
+
