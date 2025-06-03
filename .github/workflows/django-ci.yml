@@ -22,7 +22,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h127.0.0.1 -uroot -pdbpass"
+          --health-cmd="mysqladmin ping -h127.0.0.1 -uroot -p$rootpass"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -73,7 +73,7 @@ jobs:
       # wait for db
     - name: Wait for MySQL
       run: |
-        for i in {1..10}; do
+        for i in {1..15}; do
           if mysqladmin ping -h127.0.0.1 -uroot  -p${{ secrets.MYSQL_ROOT_PASSWORD }} ; then
             echo "MySQL is up!"
             break
@@ -87,13 +87,14 @@ jobs:
       env:
         DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USER: root
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.MYSQL_DATABASE }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
         DB_HOST: 127.0.0.1
         DB_PORT: ${{ secrets.DB_PORT }}
       run: |
         python manage.py migrate
+        python manage.py collectstatic --noinput
         python manage.py test
 
      # Email Job status
